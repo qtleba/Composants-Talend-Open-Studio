@@ -577,6 +577,7 @@ XML_API_<%=cid%> xml_api_<%=cid%> = new XML_API_<%=cid%>();
 String str_<%=cid %> = "";
 org.dom4j.Node node_<%=cid%> = null;
 for (org.dom4j.tree.AbstractNode temp_<%=cid%>: nodeList_<%=cid%>) {
+	java.util.List<String> lst_<%=cid%> = null;
 <%
 // *** SAX *** //
 }else if(("SAX").equals(mode)){
@@ -606,10 +607,10 @@ String[] queryPaths_<%=cid%> = new String[]{
 <%
 	boolean first = true;
 	for(Map<String,String> path:mapping){
-%>	
-	<%=first?"":","%><%=path.get("QUERY")%>
-<%
 		String query = path.get("QUERY");
+%>	
+	<%=first?"":","%><%=query %>
+<%	
 		if(query!=null && query.indexOf("@")<0){
 %>		
 	,<%=query%>+"/@xsi:nil"
@@ -625,7 +626,7 @@ boolean[] asXMLs_<%=cid%> = new boolean[]{
 	first = true;
 	for(Map<String,String> path:mapping){
 %>	
-	<%=first?"":","%><%="true".equals(path.get("NODECHECK"))? "true":"false" %>
+	<%=first?"":","%><%="true".equals(path.get("NODECHECK"))||"true".equals(path.get("MULTINODECHECK"))?"true":"false" %>
 <%
 		String query = path.get("QUERY");
 		if(query!=null && query.indexOf("@")<0){
@@ -654,7 +655,17 @@ if(filename_<%=cid %> instanceof java.io.InputStream){
 java.util.Iterator<java.util.Map<String, String>> it_<%=cid%>  = looper_<%=cid%>.iterator();
 while (it_<%=cid%>.hasNext()) {
 	java.util.Map<String, String> row_<%=cid%> = it_<%=cid%>.next();
+	java.util.regex.Matcher m_<%=cid%>_1 = null;
+	java.util.regex.Matcher m_<%=cid%>_2 = null;
+	java.util.List<String> lst_<%=cid%> = null;
+	int flags = java.util.regex.Pattern.CASE_INSENSITIVE;
+	
 <%
+	if ("UTF-8".equals(encoding)) {
+%>
+	flags |= java.util.regex.Pattern.UNICODE_CASE;
+<%
+	}
 }
 %>
 	nb_line_<%=cid%>++;
@@ -696,6 +707,13 @@ if ((metadatas!=null)&&(metadatas.size()>0)) {
 %>
 	boolean whetherReject_<%=cid %> = false;
 	<%=firstConnName %> = new <%=conn.getName() %>Struct();
+<%
+	if(("Dom4j").equals(mode)) {
+%>
+	java.util.List<org.dom4j.tree.AbstractNode> element_nodeList_<%=cid%> = null;
+<%
+	}
+%>
 	try{
 <%
 				
@@ -705,71 +723,129 @@ if ((metadatas!=null)&&(metadatas.size()>0)) {
 					String multiNodeCheck = mapping.get(i).get("MULTINODECHECK");
 					if(("Xerces").equals(mode)){
 %>
-	lst_<%=cid%> = new java.util.ArrayList<String>();
-	if(xml_api_<%=cid%>.getNodeType(tmp_<%=cid %>,<%=query%>)==com.sun.org.apache.xpath.internal.objects.XObject.CLASS_NODESET){
-		node_<%=cid%> = xml_api_<%=cid%>.getSingleNode(tmp_<%=cid %>,<%=query%>);
+		lst_<%=cid%> = new java.util.ArrayList<String>();
+		if(xml_api_<%=cid%>.getNodeType(tmp_<%=cid %>,<%=query%>)==com.sun.org.apache.xpath.internal.objects.XObject.CLASS_NODESET){
+			node_<%=cid%> = xml_api_<%=cid%>.getSingleNode(tmp_<%=cid %>,<%=query%>);
 <%
 						if(("true").equals(multiNodeCheck)) {
 %>
-		nl_<%=cid%> = xml_api_<%=cid%>.getNodeList(tmp_<%=cid %>,<%=query%>);
-		for (int i = 0; i < nl_<%=cid%>.getLength(); i++) {
-			lst_<%=cid%>.add(nl_<%=cid%>.item(i).getTextContent());
-		}
+			nl_<%=cid%> = xml_api_<%=cid%>.getNodeList(tmp_<%=cid %>,<%=query%>);
+			for (int i = 0; i < nl_<%=cid%>.getLength(); i++) {
+				lst_<%=cid%>.add(nl_<%=cid%>.item(i).getTextContent());
+			}
 <%
 						}
 						if("true".equals(useSeparator)){
 %>
-    	if(node_<%=cid %>!=null && node_<%=cid %>.getNodeType()==org.w3c.dom.Node.ELEMENT_NODE && node_<%=cid %>.hasChildNodes()){
-    		str_<%=cid %> = contentTool_<%=cid %>.getNodeContent(node_<%=cid%>);
-    	}else{
-    		str_<%=cid %> = node_<%=cid%>!=null?node_<%=cid%>.getTextContent():"";
-    	}
+			if(node_<%=cid %>!=null && node_<%=cid %>.getNodeType()==org.w3c.dom.Node.ELEMENT_NODE && node_<%=cid %>.hasChildNodes()){
+				str_<%=cid %> = contentTool_<%=cid %>.getNodeContent(node_<%=cid%>);
+			}else{
+				str_<%=cid %> = node_<%=cid%>!=null?node_<%=cid%>.getTextContent():"";
+			}
 <%
 						}else{
 %>
-		str_<%=cid %> = node_<%=cid%>!=null?node_<%=cid%>.getTextContent():"";
+			str_<%=cid %> = node_<%=cid%>!=null?node_<%=cid%>.getTextContent():"";
 <%
 						}
 %>
-	}else{
-		node_<%=cid %> = tmp_<%=cid %>;
-		str_<%=cid %> = xml_api_<%=cid%>.getNodeString(tmp_<%=cid %>,<%=query%>);
-	}
+		}else{
+			node_<%=cid %> = tmp_<%=cid %>;
+			str_<%=cid %> = xml_api_<%=cid%>.getNodeString(tmp_<%=cid %>,<%=query%>);
+		}
 <%
 					}else if(("Dom4j").equals(mode)){
 %>
-	org.dom4j.XPath xTmp<%=i%>_<%=cid%> = temp_<%=cid%>.createXPath(nsTool_<%=cid%>.addDefaultNSPrefix(<%=query%>,<%=loopQuery%>));
-    xTmp<%=i%>_<%=cid%>.setNamespaceURIs(xmlNameSpaceMap_<%=cid%>);
-    Object obj<%=i%>_<%=cid%> = xTmp<%=i%>_<%=cid%>.evaluate(temp_<%=cid%>);
-    if(obj<%=i%>_<%=cid%> instanceof String || obj<%=i%>_<%=cid%> instanceof Number){
-    	node_<%=cid%> = temp_<%=cid%>;
-    	str_<%=cid %> = String.valueOf(obj<%=i%>_<%=cid%>);
-    }else{
-    	node_<%=cid%> = xTmp<%=i%>_<%=cid%>.selectSingleNode(temp_<%=cid%>);
+		org.dom4j.XPath xTmp<%=i%>_<%=cid%> = temp_<%=cid%>.createXPath(nsTool_<%=cid%>.addDefaultNSPrefix(<%=query%>,<%=loopQuery%>));
+		xTmp<%=i%>_<%=cid%>.setNamespaceURIs(xmlNameSpaceMap_<%=cid%>);
+		Object obj<%=i%>_<%=cid%> = xTmp<%=i%>_<%=cid%>.evaluate(temp_<%=cid%>);
 <%
-						if(("true").equals(nodeCheck)){
+	if (("true").equals(multiNodeCheck)){
 %>
-		str_<%=cid %> = node_<%=cid %>==null?null:node_<%=cid %>.asXML();
+		lst_<%=cid%> = new java.util.ArrayList<String>();
+		
+		if (obj<%=i%>_<%=cid%> instanceof java.util.List){
+			node_<%=cid%> = xTmp<%=i%>_<%=cid%>.selectSingleNode(temp_<%=cid%>);
 <%
-						}else{
+		if(("true").equals(nodeCheck)){
 %>
-    	str_<%=cid %> = xTmp<%=i%>_<%=cid%>.valueOf(temp_<%=cid%>);
+				str_<%=cid %> = node_<%=cid %>==null?null:node_<%=cid %>.asXML();
 <%
-						}
+		} else{
+%>
+				str_<%=cid %> = xTmp<%=i%>_<%=cid%>.valueOf(temp_<%=cid%>);
+<%
+		}
+%>
+			
+			element_nodeList_<%=cid%> = (java.util.List<org.dom4j.tree.AbstractNode>) xTmp<%=i%>_<%=cid%>
+								.selectNodes(temp_<%=cid%>);
+			
+			for (org.dom4j.tree.AbstractNode element_node_<%=cid%> : element_nodeList_<%=cid%>){			
+<%
+			if(("true").equals(nodeCheck)){
+%>
+				lst_<%=cid%>.add(element_node_<%=cid%>==null ? null : element_node_<%=cid%>.asXML());
+<%
+			} else{
+%>
+				String str_element_node_<%=cid%> = null;
+				
+				if (xml_api_<%=cid%>.isDefNull(element_node_<%=cid%>)){
+					str_element_node_<%=cid%> = null;
+				} else if (xml_api_<%=cid%>.isEmpty(element_node_<%=cid%>)){
+					str_element_node_<%=cid%> = "";
+				} else if (xml_api_<%=cid%>.isMissing(element_node_<%=cid%>)){
+					str_element_node_<%=cid%> = null;
+				} else {
+					str_element_node_<%=cid%> = element_node_<%=cid%>.getStringValue();
+				}
+				lst_<%=cid%>.add(str_element_node_<%=cid%>);
+<%
+			}
+%>
+			}
+		}		
+		else {
+<%
+	}
+%>
+			if(obj<%=i%>_<%=cid%> instanceof String || obj<%=i%>_<%=cid%> instanceof Number){
+				node_<%=cid%> = temp_<%=cid%>;
+				str_<%=cid %> = String.valueOf(obj<%=i%>_<%=cid%>);
+			} else {
+				node_<%=cid%> = xTmp<%=i%>_<%=cid%>.selectSingleNode(temp_<%=cid%>);
+<%
+		if(("true").equals(nodeCheck)){
+%>
+				str_<%=cid %> = node_<%=cid %>==null?null:node_<%=cid %>.asXML();
+<%
+		} else {
+%>
+				str_<%=cid %> = xTmp<%=i%>_<%=cid%>.valueOf(temp_<%=cid%>);
+<%
+		}
 %>
 	}
 <%
+	if (("true").equals(multiNodeCheck)){
+%>
+		}
+<%
+	}
+%>
+<%
 					}else if(("SAX").equals(mode)){
 %>
-	str_<%=cid %> = row_<%=cid%>.get(<%=query%>);
+			str_<%=cid %> = row_<%=cid%>.get(<%=query%>);
 <%
 						if(query!=null && query.indexOf("@")<0){
 %>
-	node_<%=cid%> = new String[]{str_<%=cid %>,row_<%=cid%>.get(<%=query%>+"/@xsi:nil")};
+			node_<%=cid%> = new String[]{str_<%=cid %>,row_<%=cid%>.get(<%=query%>+"/@xsi:nil")};
 <%
 						}else{
 %>
-	node_<%=cid%> = new String[]{str_<%=cid %>,null};
+			node_<%=cid%> = new String[]{str_<%=cid %>,null};
 <%
 						}
 					}
@@ -788,20 +864,27 @@ if ((metadatas!=null)&&(metadatas.size()>0)) {
 									isNotSetDefault=true;
 								}
 								
+								if(("Dom4j").equals(mode) && ("true").equals(multiNodeCheck)
+									&& (javaType == JavaTypesManager.LIST)){
+%>
+								<%=conn.getName() %>.<%=column.getLabel() %> = lst_<%=cid %>;
+<%
+									continue;
+								}
 								if(("Dom4j").equals(mode) && ("true").equals(nodeCheck)){
 %>
 								<%=conn.getName() %>.<%=column.getLabel() %> = str_<%=cid %>;
 <%
 									continue;
 								}
-								if(("Xerces").equals(mode) && ("true").equals(multiNodeCheck)) {
-									if(javaType == JavaTypesManager.LIST) {
+								if(("Xerces").equals(mode) && ("true").equals(multiNodeCheck)
+									&& (javaType == JavaTypesManager.LIST)) {
 %>
 								<%=conn.getName() %>.<%=column.getLabel() %> = lst_<%=cid %>;
 <%
 										continue;
-									}
 								}
+								
 								if(javaType == JavaTypesManager.STRING){
 									if(column.isNullable()){
 %>
@@ -822,7 +905,7 @@ if ((metadatas!=null)&&(metadatas.size()>0)) {
 									}else{
 <%
 									}
-								}else{ // other type
+								}else { // other type
 									if(column.isNullable()){
 %>	
 										if(xml_api_<%=cid%>.isDefNull(node_<%=cid%>)){
@@ -835,11 +918,45 @@ if ((metadatas!=null)&&(metadatas.size()>0)) {
 %>
 										if(xml_api_<%=cid%>.isMissing(node_<%=cid%>) || xml_api_<%=cid%>.isEmpty(node_<%=cid%>)){
 											<%=conn.getName() %>.<%=column.getLabel() %> =<%=isNotSetDefault?JavaTypesManager.getDefaultValueFromJavaType(typeToGenerate):column.getDefault()%>;
-										}else{
+										} else {
 <%
 									}
 								}
-								if (javaType == JavaTypesManager.STRING || javaType == JavaTypesManager.OBJECT) {
+								
+								if(("SAX").equals(mode) && ("true").equals(multiNodeCheck)
+									&& (javaType == JavaTypesManager.LIST) && (query.indexOf("@")<0)) {
+%>
+								lst_<%=cid %> = new java.util.ArrayList<String>();
+								m_<%=cid%>_1 = java.util.regex.Pattern
+												.compile("(<" + <%=query%> + ".*?>.*?</" + <%=query%> + ">)+?", flags)
+												.matcher(str_<%=cid %>);
+												
+								while (m_<%=cid%>_1.find()){
+									String element_str_<%=cid%>_1 = str_<%=cid %>
+																	.substring(m_<%=cid%>_1.start(), m_<%=cid%>_1.end());																
+<%
+										if(!("true").equals(nodeCheck)){
+%>									
+									m_<%=cid%>_2 = java.util.regex.Pattern
+													.compile("<" + <%=query%> + ".*?>(.*?)</" + <%=query%> + ">", flags)
+													.matcher(element_str_<%=cid%>_1);
+									if (m_<%=cid%>_2.matches()){
+										lst_<%=cid %>.add(m_<%=cid%>_2.group(1));
+									}
+<%
+										} else {
+%>
+									lst_<%=cid %>.add(element_str_<%=cid%>_1);
+<%
+										}
+%>
+								}
+								<%=conn.getName() %>.<%=column.getLabel() %> = lst_<%=cid %>;
+							}
+<%
+									continue;
+								}
+								else if (javaType == JavaTypesManager.STRING || javaType == JavaTypesManager.OBJECT) {
 %>
 		<%=conn.getName() %>.<%=column.getLabel() %> = str_<%=cid %>;
 <%
